@@ -1,5 +1,5 @@
 {
-  "name": "@ebondu/angular2-keycloak",
+  "name": "@neo9/angular2-keycloak",
   "private": false,
   "version": "0.9.3",
   "description": "An angular keycloak wrapper",
@@ -37,7 +37,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/ebondu/angular2-keycloak"
+    "url": "https://github.com/neo9/angular2-keycloak.git"
   },
   "author": "ebondu",
   "keywords": [
@@ -49,18 +49,18 @@
   ],
   "license": "Apache2",
   "bugs": {
-    "url": "https://github.com/ebondu/angular2-keycloak/issues"
+    "url": "https://github.com/neo9/angular2-keycloak.git/issues"
   },
-  "homepage": "https://github.com/ebondu/angular2-keycloak#readme",
+  "homepage": "https://github.com/neo9/angular2-keycloak#readme",
   "devDependencies": {
     "@angular/common": "^4.0.0",
     "@angular/compiler": "^4.0.0",
     "@angular/compiler-cli": "^4.0.0",
     "@angular/core": "^4.0.0",
+    "@angular/http": "^4.0.0",
     "@angular/language-service": "^4.0.0",
     "@angular/platform-browser": "^4.0.0",
     "@angular/platform-browser-dynamic": "^4.0.0",
-    "@angular/http": "^4.0.0",
     "@compodoc/compodoc": "^1.0.0-beta.3",
     "@mattlewis92/webpack-karma-die-hard": "^1.0.4",
     "@ngtools/webpack": "^1.5.2",
@@ -71,6 +71,7 @@
     "@types/sinon": "^2.1.2",
     "@types/sinon-chai": "^2.7.26",
     "@types/webpack": "^3.0.4",
+    "angular2-uuid": "^1.1.1",
     "chai": "^4.0.0",
     "codecov": "^2.1.0",
     "codelyzer": "^3.0.0",
@@ -105,13 +106,12 @@
     "tslint-loader": "^3.5.3",
     "typescript": "~2.4.1",
     "validate-commit-msg": "^2.8.0",
-    "webpack": "^3.3.0",
+    "webpack": "^3.9.1",
     "webpack-angular-externals": "^1.0.0",
     "webpack-config-utils": "^2.3.0",
     "webpack-dev-server": "^2.2.0",
     "webpack-rxjs-externals": "^1.0.0",
-    "zone.js": "^0.8.4",
-    "angular2-uuid": "^1.1.1"
+    "zone.js": "^0.8.4"
   },
   "peerDependencies": {
     "@angular/core": ">=2.0.0 <5.0.0"
@@ -120,5 +120,8 @@
     "commitizen": {
       "path": "node_modules/cz-conventional-changelog"
     }
+  },
+  "dependencies": {
+    "@ionic/storage": "^2.1.3"
   }
 }

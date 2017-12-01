@@ -5,12 +5,14 @@ import { Http, XHRBackend, RequestOptions } from '@angular/http';
 import { Keycloak } from './services/keycloak.core.service';
 import { KeycloakAuthorization } from './services/keycloak.auth.service';
 import { KeycloakHttp } from './services/keycloak.http.service';
+import { IonicStorage } from './storage/keycloak.storage.ionic';
 
 export * from './adapters/keycloak.adapter.cordova';
 export * from './adapters/keycloak.adapter.default';
 export * from './services/keycloak.auth.service';
 export * from './services/keycloak.core.service';
 export * from './services/keycloak.http.service';
+export * from './storage/keycloak.storage.d';
 export * from './storage/keycloak.storage.cookie';
 export * from './storage/keycloak.storage.local';
 export * from './utils/keycloak.utils.loginIframe';
@@ -38,6 +40,7 @@ export class KeycloakModule {
         Keycloak,
         KeycloakAuthorization,
         KeycloakHttp,
+        IonicStorage,
         {
           provide: Http,
           useFactory: keycloakHttpFactory,

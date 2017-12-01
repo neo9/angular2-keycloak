@@ -1,4 +1,7 @@
 import { KeyClockStorage } from './keycloak.storage';
+import { Injectable } from '@angular/core';
+import { Storage } from '@ionic/storage';
+
 /*
  * Copyright 2017 ebondu and/or its affiliates
  * and other contributors as indicated by the @author tags.
@@ -19,36 +22,39 @@ import { KeyClockStorage } from './keycloak.storage';
 /**
  * To store Keycloak objects like tokens using a localStorage.
  */
-export class LocalStorage implements KeyClockStorage {
+@Injectable()
+export class IonicStorage implements KeyClockStorage {
+  constructor(private storage: Storage) { }
+
   public clearExpired() {
     const time = new Date().getTime();
-    for (let i = 1; i <= localStorage.length; i++) {
-      const key = localStorage.key(i);
+
+    this.storage.forEach((value: any, key: string) => {
       if (key && key.indexOf('kc-callback-') === 0) {
-        const value = localStorage.getItem(key);
         if (value) {
           try {
             const expires = JSON.parse(value).expires;
             if (!expires || expires < time) {
-              localStorage.removeItem(key);
+              this.storage.remove(key);
             }
           } catch (err) {
-            localStorage.removeItem(key);
+            this.storage.remove(key);
           }
         }
       }
-    }
+    })
   }
 
-  public async get(state: string): Promise<any> {
+  public async get(state: string) {
     if (!state) {
       return;
     }
 
     const key = 'kc-callback-' + state;
-    let value = localStorage.getItem(key);
+    let value = await this.storage.get(key);
+
     if (value) {
-      localStorage.removeItem(key);
+      this.storage.remove(key);
       value = JSON.parse(value);
     }
 
@@ -61,6 +67,6 @@ export class LocalStorage implements KeyClockStorage {
 
     const key = 'kc-callback-' + state.state;
     state.expires = new Date().getTime() + 60 * 60 * 1000;
-    localStorage.setItem(key, JSON.stringify(state));
+    this.storage.set(key, JSON.stringify(state));
   }
 }

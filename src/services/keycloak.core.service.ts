@@ -34,6 +34,8 @@ import { LoginIframe } from '../utils/keycloak.utils.loginIframe';
 import { Token } from '../utils/keycloak.utils.token';
 import { Lock } from '../utils/keycloak.utils.singleton';
 import { UUID } from 'angular2-uuid';
+import { IonicStorage } from './../storage/keycloak.storage.ionic';
+import { KeyClockStorage } from './../storage/keycloak.storage';
 
 /**
  * Keycloak core classes to manage tokens with a keycloak server.
@@ -73,7 +75,7 @@ export class Keycloak {
   public resourceAccess: any; // = {};
   public callback_id: number; // = 0;
   public loginIframe: LoginIframe; // = new LoginIframe(true, [], 5);
-  public callbackStorage: any; // = {};
+  public callbackStorage: KeyClockStorage; // = {};
   public timeSkew: number; // = 0;
   public loginRequired: boolean; // = false;
 
@@ -544,10 +546,10 @@ export class Keycloak {
     return id;
   }
 
-  public parseCallback(url: string): any {
+  public async parseCallback(url: string): Promise<any> {
     const oauth: any = URIParser.parseUri(url, this.responseMode);
     const state: string = oauth.state;
-    const oauthState = this.callbackStorage.get(state);
+    const oauthState = await this.callbackStorage.get(state);
 
     if (
       oauthState &&
@@ -565,7 +567,9 @@ export class Keycloak {
   }
 
   // public constructor
-  constructor(@Inject(PLATFORM_ID) private platformId: any) {
+  constructor(
+    private ionicStorageService: IonicStorage,
+    @Inject(PLATFORM_ID) private platformId: any) {
     this.loginIframe = new LoginIframe(true, [], 5);
   }
 
@@ -580,10 +584,14 @@ export class Keycloak {
 
       // console.info('KC_CORE: initializing...');
 
-      try {
-        this.callbackStorage = new LocalStorage();
-      } catch (err) {
-        this.callbackStorage = new CookieStorage();
+      if (initOptions && initOptions.adapter === 'ionic') {
+        this.callbackStorage = this.ionicStorageService;
+      } else {
+        try {
+          this.callbackStorage = new LocalStorage();
+        } catch (err) {
+          this.callbackStorage = new CookieStorage();
+        }
       }
 
       if (initOptions && initOptions.adapter === 'cordova') {
@@ -711,68 +719,68 @@ export class Keycloak {
   private processInit(initOptions: any, kc: any): Observable<boolean> {
     return new Observable<boolean>((observer: any) => {
       if (window) {
-        const callback = this.parseCallback(window.location.href);
-        // let initPromise:any = Keycloak.createPromise;
+        return Observable.fromPromise(this.parseCallback(window.location.href)).subscribe((callback) => {
+          if (callback) {
+            this.setupCheckLoginIframe(kc).subscribe(setup => {
+              // console.info("KC_CORE: replacing window url");
+              window.history.replaceState({}, null, callback.newUrl);
+              this.processCallback(callback);
+            });
+          } else if (initOptions) {
+            if (initOptions.token || initOptions.refreshToken) {
+              this.setToken(
+                initOptions.token,
+                initOptions.refreshToken,
+                initOptions.idToken,
+                false
+              );
+              this.timeSkew = initOptions.timeSkew || 0;
 
-        if (callback) {
-          this.setupCheckLoginIframe(kc).subscribe(setup => {
-            // console.info("KC_CORE: replacing window url");
-            window.history.replaceState({}, null, callback.newUrl);
-            this.processCallback(callback);
-          });
-        } else if (initOptions) {
-          if (initOptions.token || initOptions.refreshToken) {
-            this.setToken(
-              initOptions.token,
-              initOptions.refreshToken,
-              initOptions.idToken,
-              false
-            );
-            this.timeSkew = initOptions.timeSkew || 0;
-
-            if (this.loginIframe.enable) {
-              this.setupCheckLoginIframe(kc).subscribe(setup => {
-                this.checkLoginIframe().subscribe((checked: boolean) => {
-                  observer.next(true);
+              if (this.loginIframe.enable) {
+                this.setupCheckLoginIframe(kc).subscribe(setup => {
+                  this.checkLoginIframe().subscribe((checked: boolean) => {
+                    observer.next(true);
+                  });
                 });
-              });
+              } else {
+                observer.next(true);
+              }
+            } else if (initOptions.onLoad) {
+              const options: any = {};
+              const doLogin = function doLoginCall(prompt: any) {
+                if (!prompt) {
+                  options.prompt = 'none';
+                }
+                kc.login(options);
+              };
+
+              switch (initOptions.onLoad) {
+                case 'check-sso':
+                  // console.info('login iframe ? '+Keycloak.loginIframe.enable);
+                  if (this.loginIframe.enable) {
+                    this.setupCheckLoginIframe(kc).subscribe(setup => {
+                      this.checkLoginIframe().subscribe(checked => {
+                        doLogin(false);
+                      });
+                    });
+                  } else {
+                    doLogin(false);
+                  }
+                  break;
+                case 'login-required':
+                  doLogin(true);
+                  break;
+                default:
+                  throw new Error('Invalid value for onLoad');
+              }
             } else {
               observer.next(true);
-            }
-          } else if (initOptions.onLoad) {
-            const options: any = {};
-            const doLogin = function doLoginCall(prompt: any) {
-              if (!prompt) {
-                options.prompt = 'none';
-              }
-              kc.login(options);
-            };
-
-            switch (initOptions.onLoad) {
-              case 'check-sso':
-                // console.info('login iframe ? '+Keycloak.loginIframe.enable);
-                if (this.loginIframe.enable) {
-                  this.setupCheckLoginIframe(kc).subscribe(setup => {
-                    this.checkLoginIframe().subscribe(checked => {
-                      doLogin(false);
-                    });
-                  });
-                } else {
-                  doLogin(false);
-                }
-                break;
-              case 'login-required':
-                doLogin(true);
-                break;
-              default:
-                throw new Error('Invalid value for onLoad');
             }
           } else {
             observer.next(true);
           }
-        } else {
-          observer.next(true);
-        }
+        })
+        // let initPromise:any = Keycloak.createPromise;
       }
     });
   }

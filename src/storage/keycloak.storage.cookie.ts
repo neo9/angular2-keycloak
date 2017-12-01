@@ -1,3 +1,4 @@
+import { KeyClockStorage } from './keycloak.storage';
 /*
  * Copyright 2017 ebondu and/or its affiliates
  * and other contributors as indicated by the @author tags.
@@ -18,8 +19,8 @@
 /**
  * To store Keycloak objects like tokens using a cookie.
  */
-export class CookieStorage {
-  public get(state: string) {
+export class CookieStorage implements KeyClockStorage {
+  public async get(state: string) {
     if (!state) {
       return;
     }
